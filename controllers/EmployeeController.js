@@ -1,4 +1,5 @@
 const Employee = require('../models/Employee')
+const mongoose = require('mongoose');
 
 // Show the list of Employees
 const getAllEmp = (req, res, next) => {
@@ -81,20 +82,50 @@ const updateEmp = (req, res, next) => {
         age: req.body.age
     }
 
-    Employee.findByIdAndUpdate(employeeID, { $set: updateData })
-        .then(() => {
-            res.json({
-                message: 'Employee Updated Successfully!'
-            })
+    try {
+        new mongoose.Types.ObjectId(employeeID)
+    }
+    catch (E) {
+        console.log("EEEEEEE", E);
+        return res.status(500).send(
+            {
+                "statusCode": 500,
+                "error": "Internal Server Error",
+                "message": E.message
+            }
+        )
+        
+    }
+    Employee.updateOne({ _id: new mongoose.Types.ObjectId(employeeID) }, updateData)
+        .then((result) => {
+            // console.log(result);
+            if (result.n === 1) {
+                res.json({
+                    message: 'Employee Updated Successfully!'
+                })
+
+            }
+
+            else {
+                res.status(404).send(
+                    {
+                        "statusCode": 404,
+                        "error": "Not Found",
+                        "message": "Employee not found!"
+                    }
+                )
+
+            }
         })
         .catch(error => {
-            res.status(404).send(
+            res.status(500).send(
                 {
-                    "statusCode": 404,
-                    "error": "Not Found",
-                    "message": "Employee not found!"
+                    "statusCode": 500,
+                    "error": "Internal Server Error",
+                    "message": error.message
                 }
             )
+
         })
 }
 
